@@ -1,70 +1,90 @@
-# Getting Started with Create React App
+import React, {useEffect, useState} from 'react';
+import styled from 'styled-components';
+import PropTypes from 'prop-types';
+import EventSelectionTopBar from '../eventSelectionTopBar/EventSelectionTopBar';
+import {X_DARK_FONT} from '../../../assets/colors/Colors';
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+import OngoingEventCarousel from './ongoingEvents/OngoingEventCarousel';
+import SubscriptionList from './subscriptionList/SubscriptionList';
+import {subscribeToUserSubscriptions} from '../../../actions/eventSelectionActions/subscribeToUserEventSubscriptions';
+import {unsubscribeToUserEventSubscriptions} from '../../../actions/eventSelectionActions/unsubscribeToUserEventSubscriptions';
+import {useDispatch} from 'react-redux';
+import * as EventSelectionActions from '../../../actions/eventSelectionActions/_index';
+// mentionning the types of the function properties
+EventSubscriptions.propTypes = {
+    userEventList: PropTypes.object,
+    selectEventList: PropTypes.func.isRequired
+};
 
-## Available Scripts
+/**
+ * List of events
+ * @param {Object} props
+ * @param {Object} props.userEventList
+ * @param {Function} props.selectEventList
+ * @return {JSX.Element}
+ * @constructor
+ */
+function EventSubscriptions(props) {
+    //destructuring the props into 2  variables
+    const {userEventList, selectEventList} = props;
+    //using the state inside a functional componant
+    const [ongoingEvents, setOngoingEvents] = useState([]);
+    const [notOngoingEvents, setNotOngoingEvents] = useState([]);
+     //use dispatch for calling the redux actions
+    const dispatch = useDispatch();
+   //useeffect is called once when the component mount 
+    useEffect(() => {
+        //calling the eventselectionactions to subscribe and to get the user event list
+        dispatch(EventSelectionActions.subscribeToUserEventSubscriptions());
+   // the return call is used to clean up after the component unmounts 
+        return () => {
+            //unsubscribing to the user event after the component unmounts
+            dispatch(EventSelectionActions.unsubscribeToUserEventSubscriptions());
+        };
+    }, []);
+  //this use effect is called when the userEventList is updated by the first use effect
+    useEffect(() => {
 
-In the project directory, you can run:
+        const newOngoingEvents = [];
+        const newNotOngoingEvents = [];
+        //for each element in the userEvent list if the int value of the starting date is less than the
+        //current date and the endingdate is higher or equal than the current date it pushes the event in the new on going events list
+        // or else it goes in the newnotongoingevents list
+        userEventList.data.forEach((event) =>
+            parseInt(event['startingDate']) <= Date.now() && parseInt(event['endingDate']) >= Date.now() ?
+                newOngoingEvents.push(event) : newNotOngoingEvents.push(event)
+        );
+        //setting the state of the variables 
+        setOngoingEvents(newOngoingEvents);
+        setNotOngoingEvents(newNotOngoingEvents);
+    }, [userEventList]);
 
-### `yarn start`
+    return (
+        //the Container is a styled component 
+        <Container>
+             {//the eventSelectionTopBar is a component to select an event
+}
+            <EventSelectionTopBar
+                underlined={1}
+                selectEventList={selectEventList}
+                selectEventSubscriptions={null}
+            />
+         {
+             //if ongoing event contains events it displays a carousel of the different ongoing events
+         }
+            {ongoingEvents.length > 0 && <OngoingEventCarousel ongoingEvents={ongoingEvents}/>}
+            {//a subscription list of all the  not ongoingEvents
+}
+            <SubscriptionList notOngoingEvents={notOngoingEvents}/>
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+        </Container>
+    );
+}
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
-### `yarn test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `yarn build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `yarn build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+export default EventSubscriptions;
+//the diffintion of the container component
+const Container = styled.View`
+    flex: 1;
+    display: flex;
+    background-color: ${X_DARK_FONT};
+`;
